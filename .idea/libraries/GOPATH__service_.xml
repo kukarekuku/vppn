@@ -1,0 +1,33 @@
+<component name="libraryTable">
+  <library name="GOPATH &lt;service&gt;">
+    <CLASSES>
+      <root url="file://$USER_HOME$/go/src/gopkg.in" />
+      <root url="file://$USER_HOME$/go/src/collectd.org" />
+      <root url="file://$USER_HOME$/go/src/git.apache.org" />
+      <root url="file://$USER_HOME$/go/src/go.uber.org" />
+      <root url="file://$USER_HOME$/go/src/sourcegraph.com" />
+      <root url="file://$USER_HOME$/go/src/go.etcd.io" />
+      <root url="file://$USER_HOME$/go/src/golang.org" />
+      <root url="file://$USER_HOME$/go/src/google.golang.org" />
+      <root url="file://$USER_HOME$/go/src/github.com" />
+      <root url="file://$USER_HOME$/go/src/cloud.google.com" />
+      <root url="file://$USER_HOME$/go/src/go.opencensus.io" />
+    </CLASSES>
+    <SOURCES>
+      <root url="file://$USER_HOME$/go/src/gopkg.in" />
+      <root url="file://$USER_HOME$/go/src/collectd.org" />
+      <root url="file://$USER_HOME$/go/src/git.apache.org" />
+      <root url="file://$USER_HOME$/go/src/go.uber.org" />
+      <root url="file://$USER_HOME$/go/src/sourcegraph.com" />
+      <root url="file://$USER_HOME$/go/src/go.etcd.io" />
+      <root url="file://$USER_HOME$/go/src/golang.org" />
+      <root url="file://$USER_HOME$/go/src/google.golang.org" />
+      <root url="file://$USER_HOME$/go/src/github.com" />
+      <root url="file://$USER_HOME$/go/src/cloud.google.com" />
+      <root url="file://$USER_HOME$/go/src/go.opencensus.io" />
+    </SOURCES>
+    <excluded>
+      <root url="file://$PROJECT_DIR$" />
+    </excluded>
+  </library>
+</component>
