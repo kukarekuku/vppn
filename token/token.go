@@ -1,7 +1,7 @@
 package token
 
 import (
-	"github.com/pritunl/pritunl-client-electron/service/utils"
+	"../utils"
 	"time"
 )
 

@@ -1,9 +1,9 @@
 package handlers
 
 import (
+	"../event"
+	"../utils"
 	"github.com/gin-gonic/gin"
-	"github.com/pritunl/pritunl-client-electron/service/event"
-	"github.com/pritunl/pritunl-client-electron/service/utils"
 	"time"
 )
 

@@ -1,10 +1,10 @@
 package watch
 
 import (
+	"../profile"
+	"../utils"
 	"fmt"
 	"github.com/Sirupsen/logrus"
-	"github.com/pritunl/pritunl-client-electron/service/profile"
-	"github.com/pritunl/pritunl-client-electron/service/utils"
 	"reflect"
 	"runtime"
 	"runtime/debug"

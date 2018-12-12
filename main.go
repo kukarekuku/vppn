@@ -1,18 +1,18 @@
 package main
 
 import (
+	"./auth"
+	"./autoclean"
+	"./constants"
+	"./handlers"
+	"./logger"
+	"./profile"
+	"./utils"
+	"./watch"
 	"context"
 	"flag"
 	"github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
-	"github.com/pritunl/pritunl-client-electron/service/auth"
-	"github.com/pritunl/pritunl-client-electron/service/autoclean"
-	"github.com/pritunl/pritunl-client-electron/service/constants"
-	"github.com/pritunl/pritunl-client-electron/service/handlers"
-	"github.com/pritunl/pritunl-client-electron/service/logger"
-	"github.com/pritunl/pritunl-client-electron/service/profile"
-	"github.com/pritunl/pritunl-client-electron/service/utils"
-	"github.com/pritunl/pritunl-client-electron/service/watch"
 	"net/http"
 	"os"
 	"os/signal"
@@ -74,7 +74,7 @@ func main() {
 	watch.StartWatch()
 
 	server := &http.Server{
-		Addr:           "127.0.0.1:9770",
+		Addr:           "127.0.0.1:9780",
 		Handler:        router,
 		ReadTimeout:    30 * time.Second,
 		WriteTimeout:   30 * time.Second,

@@ -1,8 +1,8 @@
 package profile
 
 import (
-	"github.com/pritunl/pritunl-client-electron/service/constants"
-	"github.com/pritunl/pritunl-client-electron/service/utils"
+	"../constants"
+	"../utils"
 	"os"
 	"path/filepath"
 	"regexp"

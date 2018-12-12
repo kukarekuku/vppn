@@ -1,8 +1,8 @@
 package handlers
 
 import (
+	"../token"
 	"github.com/gin-gonic/gin"
-	"github.com/pritunl/pritunl-client-electron/service/token"
 )
 
 type tokenData struct {

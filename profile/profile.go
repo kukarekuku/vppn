@@ -2,6 +2,11 @@
 package profile
 
 import (
+	"../command"
+	"../errortypes"
+	"../event"
+	"../token"
+	"../utils"
 	"bufio"
 	"crypto/rand"
 	"crypto/rsa"
@@ -12,11 +17,6 @@ import (
 	"encoding/pem"
 	"github.com/Sirupsen/logrus"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/pritunl/pritunl-client-electron/service/command"
-	"github.com/pritunl/pritunl-client-electron/service/errortypes"
-	"github.com/pritunl/pritunl-client-electron/service/event"
-	"github.com/pritunl/pritunl-client-electron/service/token"
-	"github.com/pritunl/pritunl-client-electron/service/utils"
 	"io"
 	"io/ioutil"
 	"os"

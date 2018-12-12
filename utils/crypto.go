@@ -1,10 +1,10 @@
 package utils
 
 import (
+	"../errortypes"
 	"crypto/rand"
 	"encoding/base64"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/pritunl/pritunl-client-electron/service/errortypes"
 	"math"
 	"math/big"
 	mathrand "math/rand"

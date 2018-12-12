@@ -2,12 +2,12 @@
 package handlers
 
 import (
+	"../auth"
 	"crypto/subtle"
 	"fmt"
 	"github.com/Sirupsen/logrus"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/gin-gonic/gin"
-	"github.com/pritunl/pritunl-client-electron/service/auth"
 	"net/http"
 )
 

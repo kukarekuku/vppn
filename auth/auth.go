@@ -1,8 +1,8 @@
 package auth
 
 import (
+	"../utils"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/pritunl/pritunl-client-electron/service/utils"
 	"io/ioutil"
 	"os"
 	"strings"

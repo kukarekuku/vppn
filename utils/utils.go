@@ -2,6 +2,9 @@
 package utils
 
 import (
+	"../command"
+	"../constants"
+	"../errortypes"
 	"bufio"
 	"bytes"
 	"crypto/rand"
@@ -10,11 +13,9 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/dropbox/godropbox/container/set"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/pritunl/pritunl-client-electron/service/command"
-	"github.com/pritunl/pritunl-client-electron/service/constants"
-	"github.com/pritunl/pritunl-client-electron/service/errortypes"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -845,6 +846,7 @@ func PidInit() (err error) {
 	pid := 0
 
 	data, err := ioutil.ReadFile(pth)
+	log.Print(err)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			err = errortypes.ReadError{
@@ -865,6 +867,7 @@ func PidInit() (err error) {
 		[]byte(strconv.Itoa(os.Getpid())),
 		0644,
 	)
+	log.Print(err)
 	if err != nil {
 		err = errortypes.WriteError{
 			errors.Wrapf(err, "utils: Failed to write pid"),
@@ -874,8 +877,9 @@ func PidInit() (err error) {
 
 	if pid != 0 {
 		proc, e := os.FindProcess(pid)
+		log.Print(e)
 		if e == nil {
-			proc.Signal(os.Interrupt)
+			// proc.Signal(os.Interrupt)
 
 			done := false
 

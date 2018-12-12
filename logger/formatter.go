@@ -1,9 +1,9 @@
 package logger
 
 import (
+	"../colorize"
 	"fmt"
 	"github.com/Sirupsen/logrus"
-	"github.com/pritunl/pritunl-client-electron/service/colorize"
 	"sort"
 	"time"
 )
@@ -21,7 +21,7 @@ func format(entry *logrus.Entry) (output []byte) {
 		entry.Message,
 	)
 
-	keys := []string{}
+	var keys []string
 
 	var errStr string
 	for key, val := range entry.Data {
@@ -62,7 +62,7 @@ func formatPlain(entry *logrus.Entry) (output []byte) {
 		entry.Message,
 	)
 
-	keys := []string{}
+	var keys []string
 
 	var errStr string
 	for key, val := range entry.Data {

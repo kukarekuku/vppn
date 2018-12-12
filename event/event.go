@@ -2,8 +2,8 @@
 package event
 
 import (
+	"../utils"
 	"github.com/dropbox/godropbox/container/set"
-	"github.com/pritunl/pritunl-client-electron/service/utils"
 	"sync"
 	"time"
 )

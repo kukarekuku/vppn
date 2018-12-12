@@ -1,9 +1,9 @@
 package utils
 
 import (
+	"../command"
+	"../errortypes"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/pritunl/pritunl-client-electron/service/command"
-	"github.com/pritunl/pritunl-client-electron/service/errortypes"
 	"io"
 	"os"
 )
