@@ -1,8 +1,8 @@
 package profile
 
 import (
-	"../constants"
-	"../utils"
+	"../config"
+	"../shared/utils"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -17,7 +17,7 @@ var (
 )
 
 func getOpenvpnPath() (pth string) {
-	if constants.Development {
+	if config.Development {
 		switch runtime.GOOS {
 		case "windows":
 			pth = filepath.Join(utils.GetRootDir(), "..",
@@ -28,7 +28,7 @@ func getOpenvpnPath() (pth string) {
 		case "linux":
 			pth = "openvpn"
 		default:
-			panic("profile: Not implemented")
+			log.Panic("profile: Not implemented")
 		}
 
 		return
@@ -43,14 +43,14 @@ func getOpenvpnPath() (pth string) {
 	case "linux":
 		pth = "openvpn"
 	default:
-		panic("profile: Not implemented")
+		log.Panic("profile: Not implemented")
 	}
 
 	return
 }
 
 func getOpenvpnDir() (pth string) {
-	if constants.Development {
+	if config.Development {
 		switch runtime.GOOS {
 		case "windows":
 			pth = filepath.Join(utils.GetRootDir(), "..", "openvpn_win")
@@ -59,7 +59,7 @@ func getOpenvpnDir() (pth string) {
 		case "linux":
 			pth = ""
 		default:
-			panic("profile: Not implemented")
+			log.Panic("profile: Not implemented")
 		}
 
 		return
@@ -73,7 +73,7 @@ func getOpenvpnDir() (pth string) {
 	case "linux":
 		pth = ""
 	default:
-		panic("profile: Not implemented")
+		log.Panic("profile: Not implemented")
 	}
 
 	return

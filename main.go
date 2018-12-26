@@ -1,75 +1,63 @@
 package main
 
 import (
+	"./api"
 	"./auth"
-	"./autoclean"
-	"./constants"
-	"./handlers"
-	"./logger"
+	"./config"
 	"./profile"
-	"./utils"
+	"./shared/command"
+	"./shared/utils"
 	"./watch"
 	"context"
 	"flag"
-	"github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
+	"github.com/op/go-logging"
 	"net/http"
 	"os"
 	"os/signal"
-	"runtime/debug"
 	"syscall"
 	"time"
 )
 
+var (
+	log = logging.MustGetLogger("main")
+)
+
 func main() {
+	// получаем параметры
 	devPtr := flag.Bool("dev", false, "development mode")
+	// если передали dev, то инитим приложение в dev mode
 	flag.Parse()
 	if *devPtr {
-		constants.Development = true
+		config.Development = true
 	}
 
+	// инитим процесс
 	err := utils.PidInit()
 	if err != nil {
-		panic(err)
+		log.Error("main: Panic", err)
+		return
 	}
 
-	logger.Init()
-
-	logrus.WithFields(logrus.Fields{
-		"version": constants.Version,
-	}).Info("main: Service starting")
-
-	defer func() {
-		panc := recover()
-		if panc != nil {
-			logrus.WithFields(logrus.Fields{
-				"stack": string(debug.Stack()),
-				"panic": panc,
-			}).Error("main: Panic")
-			panic(panc)
-		}
-	}()
+	// инитим логи
+	log.Info("main: Service starting")
 
 	err = auth.Init()
 	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"error": err,
-		}).Error("main: Failed to init auth")
-		panic(err)
+		log.Error("main: Failed to init auth", err)
+		return
 	}
 
-	err = autoclean.CheckAndClean()
+	err = command.CheckAndClean()
 	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"error": err,
-		}).Error("main: Failed to run check and clean")
-		panic(err)
+		log.Error("main: Failed to run check and clean", err)
+		return
 	}
 
 	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()
-	handlers.Register(router)
+	api.Register(router)
 
 	watch.StartWatch()
 
@@ -87,10 +75,8 @@ func main() {
 		}()
 		err = server.ListenAndServe()
 		if err != nil {
-			logrus.WithFields(logrus.Fields{
-				"error": err,
-			}).Error("main: Server error")
-			panic(err)
+			log.Error("main: Server error", err)
+			return
 		}
 	}()
 

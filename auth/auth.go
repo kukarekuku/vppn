@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"../utils"
+	"../shared/utils"
 	"github.com/dropbox/godropbox/errors"
 	"io/ioutil"
 	"os"
@@ -13,7 +13,7 @@ var Key = ""
 func Init() (err error) {
 	pth := utils.GetAuthPath()
 
-	if _, e := os.Stat(pth); os.IsNotExist(e) {
+	if _, err := os.Stat(pth); os.IsNotExist(err) {
 		Key, err = utils.RandStr(64)
 		if err != nil {
 			return
@@ -21,17 +21,13 @@ func Init() (err error) {
 
 		err = ioutil.WriteFile(pth, []byte(Key), os.FileMode(0644))
 		if err != nil {
-			err = &WriteError{
-				errors.Wrap(err, "auth: Failed to auth key"),
-			}
+			err = errors.New("auth: Failed to auth key " + err.Error())
 			return
 		}
 	} else {
-		data, e := ioutil.ReadFile(pth)
-		if e != nil {
-			err = &WriteError{
-				errors.Wrap(e, "auth: Failed to auth key"),
-			}
+		data, err := ioutil.ReadFile(pth)
+		if err != nil {
+			err = errors.New("auth: Failed to auth key " + err.Error())
 			return
 		}
 
@@ -40,9 +36,7 @@ func Init() (err error) {
 		if Key == "" {
 			err = os.Remove(pth)
 			if err != nil {
-				err = &WriteError{
-					errors.Wrap(err, "auth: Failed to reset auth key"),
-				}
+				err = errors.New("auth: Failed to reset auth key " + err.Error())
 				return
 			}
 			Init()

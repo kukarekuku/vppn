@@ -2,12 +2,11 @@ package watch
 
 import (
 	"../profile"
-	"../utils"
+	"../shared/utils"
 	"fmt"
-	"github.com/Sirupsen/logrus"
+	"github.com/op/go-logging"
 	"reflect"
 	"runtime"
-	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -18,6 +17,7 @@ var (
 	restartLock = sync.Mutex{}
 	wake        = time.Now()
 	wakeLock    = sync.Mutex{}
+	log         = logging.MustGetLogger("watch")
 )
 
 func parseDns(data string) (searchDomains, searchAddresses []string) {
@@ -67,13 +67,10 @@ func parseDns(data string) (searchDomains, searchAddresses []string) {
 
 func wakeWatch(delay time.Duration) {
 	defer func() {
-		panc := recover()
-		if panc != nil {
-			logrus.WithFields(logrus.Fields{
-				"stack": string(debug.Stack()),
-				"panic": panc,
-			}).Error("watch: Panic")
-			panic(panc)
+		err := recover()
+		if err != nil {
+			log.Panic("watch: Panic", err)
+			return
 		}
 	}()
 
@@ -98,7 +95,7 @@ func wakeWatch(delay time.Duration) {
 					lastRestart = time.Now()
 					restartLock.Unlock()
 
-					logrus.Warn("watch: Wakeup restarting...")
+					log.Warning("watch: Wakeup restarting...")
 
 					profile.RestartProfiles(false)
 				} else {
@@ -112,13 +109,9 @@ func wakeWatch(delay time.Duration) {
 
 func dnsWatch() {
 	defer func() {
-		panc := recover()
-		if panc != nil {
-			logrus.WithFields(logrus.Fields{
-				"stack": string(debug.Stack()),
-				"panic": panc,
-			}).Error("watch: Panic")
-			panic(panc)
+		err := recover()
+		if err != nil {
+			log.Panic("watch: Panic", err)
 		}
 	}()
 
@@ -136,14 +129,11 @@ func dnsWatch() {
 			if dnsState {
 				err := utils.RestoreScutilDns()
 				if err != nil {
-					logrus.WithFields(logrus.Fields{
-						"error": err,
-					}).Warn("watch: Failed to restore DNS")
+					log.Warning("watch: Failed to restore DNS", err)
 				} else {
 					dnsState = false
 				}
 			}
-
 			continue
 		}
 
@@ -159,9 +149,7 @@ func dnsWatch() {
 		if strings.Contains(vpn, "No such key") {
 			connIds, err := utils.GetScutilConnIds()
 			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"error": err,
-				}).Error("watch: Failed to get DNS connection IDs")
+				log.Error("watch: Failed to get DNS connection IDs", err)
 				continue
 			}
 
@@ -175,9 +163,7 @@ func dnsWatch() {
 				"/Network/Pritunl/DNS",
 			)
 			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"error": err,
-				}).Error("watch: Failed to copy DNS settings")
+				log.Error("watch: Failed to copy DNS settings", err)
 				continue
 			}
 
@@ -193,24 +179,15 @@ func dnsWatch() {
 			if reset {
 				restartLock.Lock()
 
-				logrus.WithFields(logrus.Fields{
-					"vpn_domains":      vpnDomains,
-					"vpn_addresses":    vpnAddresses,
-					"global_domains":   globalDomains,
-					"global_addresses": globalAddresses,
-				}).Warn("watch: Lost DNS settings updating...")
+				log.Warning("watch: Lost DNS settings updating...", vpnDomains, vpnAddresses, globalDomains, globalAddresses)
 
 				err := utils.BackupScutilDns()
 				if err != nil {
-					logrus.WithFields(logrus.Fields{
-						"error": err,
-					}).Error("watch: Failed to backup DNS settings")
+					log.Error("watch: Failed to backup DNS settings", err)
 				} else {
 					err = utils.CopyScutilDns("/Network/Pritunl/DNS")
 					if err != nil {
-						logrus.WithFields(logrus.Fields{
-							"error": err,
-						}).Error("watch: Failed to update DNS settings")
+						log.Error("watch: Failed to update DNS settings", err)
 					}
 				}
 

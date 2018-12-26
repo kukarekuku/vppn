@@ -2,11 +2,10 @@
 package profile
 
 import (
-	"../command"
-	"../errortypes"
-	"../event"
-	"../token"
-	"../utils"
+	"../shared/command"
+	"../shared/events"
+	"../shared/token"
+	"../shared/utils"
 	"bufio"
 	"crypto/rand"
 	"crypto/rsa"
@@ -15,15 +14,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
-	"github.com/Sirupsen/logrus"
-	"github.com/dropbox/godropbox/errors"
+	"errors"
+	"github.com/op/go-logging"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -43,6 +41,7 @@ var (
 		m: map[string]*Profile{},
 	}
 	Ping = time.Now()
+	log  = logging.MustGetLogger("profile")
 )
 
 type OutputData struct {
@@ -53,7 +52,7 @@ type OutputData struct {
 type Profile struct {
 	state           bool             `json:"-"`
 	stateLock       sync.Mutex       `json:"-"`
-	stop            bool             `jons:"-"`
+	stop            bool             `json:"-"`
 	waiters         []chan bool      `json:"-"`
 	remPaths        []string         `json:"-"`
 	cmd             *exec.Cmd        `json:"-"`
@@ -89,10 +88,7 @@ func (p *Profile) write() (pth string, err error) {
 
 	err = ioutil.WriteFile(pth, []byte(p.Data), os.FileMode(0600))
 	if err != nil {
-		err = &WriteError{
-			errors.Wrap(err, "profile: Failed to write profile"),
-		}
-		return
+		err = errors.New("profile: Failed to write profile " + err.Error())
 	}
 
 	return
@@ -131,17 +127,13 @@ func (p *Profile) writeUp() (pth string, err error) {
 		}
 		break
 	default:
-		panic("profile: Not implemented")
+		log.Panic("profile: Not implemented")
 	}
 
 	err = ioutil.WriteFile(pth, []byte(script), os.FileMode(0755))
 	if err != nil {
-		err = &WriteError{
-			errors.Wrap(err, "profile: Failed to write up script"),
-		}
-		return
+		err = errors.New("profile: Failed to write up script " + err.Error())
 	}
-
 	return
 }
 
@@ -178,15 +170,12 @@ func (p *Profile) writeDown() (pth string, err error) {
 		}
 		break
 	default:
-		panic("profile: Not implemented")
+		log.Panic("profile: Not implemented")
 	}
 
 	err = ioutil.WriteFile(pth, []byte(script), os.FileMode(0755))
 	if err != nil {
-		err = &WriteError{
-			errors.Wrap(err, "profile: Failed to write down script"),
-		}
-		return
+		err = errors.New("profile: Failed to write down script " + err.Error())
 	}
 
 	return
@@ -202,10 +191,7 @@ func (p *Profile) writeBlock() (pth string, err error) {
 
 	err = ioutil.WriteFile(pth, []byte(blockScript), os.FileMode(0755))
 	if err != nil {
-		err = &WriteError{
-			errors.Wrap(err, "profile: Failed to write block script"),
-		}
-		return
+		err = errors.New("profile: Failed to write block script " + err.Error())
 	}
 
 	return
@@ -222,17 +208,14 @@ func (p *Profile) writeAuth() (pth string, err error) {
 	if p.ServerPublicKey != "" {
 		block, _ := pem.Decode([]byte(p.ServerPublicKey))
 
-		pub, e := x509.ParsePKCS1PublicKey(block.Bytes)
-		if e != nil {
-			err = &errortypes.ParseError{
-				errors.Wrap(e, "profile: Failed to parse public key"),
-			}
+		pub, err := x509.ParsePKCS1PublicKey(block.Bytes)
+		if err != nil {
+			err = errors.New("profile: Failed to parse public key " + err.Error())
 			return
 		}
 
-		nonce, e := utils.RandStr(32)
-		if e != nil {
-			err = e
+		nonce, err := utils.RandStr(32)
+		if err != nil {
 			return
 		}
 
@@ -256,30 +239,25 @@ func (p *Profile) writeAuth() (pth string, err error) {
 			Timestamp: time.Now().Unix(),
 		}
 
-		authDataJson, e := json.Marshal(authData)
-		if e != nil {
-			err = &errortypes.ParseError{
-				errors.Wrap(e, "profile: Failed to encode auth data"),
-			}
+		authDataJson, err := json.Marshal(authData)
+		if err != nil {
+			err = errors.New("profile: Failed to encode auth data " + err.Error())
 			return
 		}
 
-		ciphertext, e := rsa.EncryptOAEP(
+		ciphertext, err := rsa.EncryptOAEP(
 			sha512.New(),
 			rand.Reader,
 			pub,
 			authDataJson,
 			[]byte{},
 		)
-		if e != nil {
-			err = &errortypes.WriteError{
-				errors.Wrap(e, "profile: Failed to encrypt auth data"),
-			}
+		if err != nil {
+			err = errors.New("profile: Failed to encrypt auth data " + err.Error())
 			return
 		}
 
 		ciphertext64 := base64.StdEncoding.EncodeToString(ciphertext)
-
 		password = "<%=RSA_ENCRYPTED=%>" + ciphertext64
 	}
 
@@ -288,17 +266,14 @@ func (p *Profile) writeAuth() (pth string, err error) {
 	err = ioutil.WriteFile(pth, []byte(p.Username+"\n"+password+"\n"),
 		os.FileMode(0600))
 	if err != nil {
-		err = &WriteError{
-			errors.Wrap(err, "profile: Failed to write profile auth"),
-		}
-		return
+		err = errors.New("profile: Failed to write profile auth " + err.Error())
 	}
 
 	return
 }
 
 func (p *Profile) update() {
-	evt := event.Event{
+	evt := events.Event{
 		Type: "update",
 		Data: p,
 	}
@@ -307,12 +282,12 @@ func (p *Profile) update() {
 	status := GetStatus()
 
 	if status {
-		evt := event.Event{
+		evt := events.Event{
 			Type: "connected",
 		}
 		evt.Init()
 	} else {
-		evt := event.Event{
+		evt := events.Event{
 			Type: "disconnected",
 		}
 		evt.Init()
@@ -320,7 +295,7 @@ func (p *Profile) update() {
 }
 
 func (p *Profile) pushOutput(output string) {
-	evt := &event.Event{
+	evt := &events.Event{
 		Type: "output",
 		Data: &OutputData{
 			Id:     p.Id,
@@ -347,20 +322,16 @@ func (p *Profile) parseLine(line string) {
 
 		go func() {
 			defer func() {
-				panc := recover()
-				if panc != nil {
-					logrus.WithFields(logrus.Fields{
-						"stack": string(debug.Stack()),
-						"panic": panc,
-					}).Error("profile: Panic")
-					panic(panc)
+				err := recover()
+				if err != nil {
+					log.Panic("profile: Panic", err)
 				}
 			}()
 
 			utils.ClearDNSCache()
 		}()
 	} else if strings.Contains(line, "Inactivity timeout (--inactive)") {
-		evt := event.Event{
+		evt := events.Event{
 			Type: "inactive",
 			Data: p,
 		}
@@ -370,13 +341,9 @@ func (p *Profile) parseLine(line string) {
 	} else if strings.Contains(line, "Inactivity timeout") {
 		go func() {
 			defer func() {
-				panc := recover()
-				if panc != nil {
-					logrus.WithFields(logrus.Fields{
-						"stack": string(debug.Stack()),
-						"panic": panc,
-					}).Error("profile: Panic")
-					panic(panc)
+				err := recover()
+				if err != nil {
+					log.Panic("profile: Panic", err)
 				}
 			}()
 
@@ -386,9 +353,7 @@ func (p *Profile) parseLine(line string) {
 
 			err := p.Stop()
 			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"error": err,
-				}).Error("profile: Stop error")
+				log.Error("profile: Stop error", err)
 				return
 			}
 
@@ -397,9 +362,7 @@ func (p *Profile) parseLine(line string) {
 			if !stop && prfl.Reconnect {
 				err = prfl.Start(false)
 				if err != nil {
-					logrus.WithFields(logrus.Fields{
-						"error": err,
-					}).Error("profile: Restart error")
+					log.Error("profile: Restart error", err)
 					return
 				}
 			}
@@ -409,13 +372,9 @@ func (p *Profile) parseLine(line string) {
 
 		go func() {
 			defer func() {
-				panc := recover()
-				if panc != nil {
-					logrus.WithFields(logrus.Fields{
-						"stack": string(debug.Stack()),
-						"panic": panc,
-					}).Error("profile: Panic")
-					panic(panc)
+				err := recover()
+				if err != nil {
+					log.Panic("profile: Panic", err)
 				}
 			}()
 
@@ -438,7 +397,7 @@ func (p *Profile) parseLine(line string) {
 		if time.Since(p.lastAuthErr) > 10*time.Second {
 			p.lastAuthErr = time.Now()
 
-			evt := event.Event{
+			evt := events.Event{
 				Type: "auth_error",
 				Data: p,
 			}
@@ -492,13 +451,9 @@ func (p *Profile) clearStatus(start time.Time) {
 
 	go func() {
 		defer func() {
-			panc := recover()
-			if panc != nil {
-				logrus.WithFields(logrus.Fields{
-					"stack": string(debug.Stack()),
-					"panic": panc,
-				}).Error("profile: Panic")
-				panic(panc)
+			err := recover()
+			if err != nil {
+				log.Panic("profile: Panic", err)
 			}
 		}()
 
@@ -522,9 +477,7 @@ func (p *Profile) clearStatus(start time.Time) {
 		if runtime.GOOS == "darwin" && len(Profiles.m) == 0 {
 			err := utils.ClearScutilKeys()
 			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"error": err,
-				}).Error("profile: Failed to clear scutil keys")
+				log.Error("profile: Failed to clear scutil keys", err)
 			}
 		}
 		Profiles.Unlock()
@@ -537,9 +490,7 @@ func (p *Profile) clearStatus(start time.Time) {
 		p.waiters = []chan bool{}
 		p.stateLock.Unlock()
 
-		logrus.WithFields(logrus.Fields{
-			"profile_id": p.Id,
-		}).Info("profile: Disconnected")
+		log.Info("profile: Disconnected", p.Id)
 	}()
 }
 
@@ -580,9 +531,7 @@ func (p *Profile) Start(timeout bool) (err error) {
 		return
 	}
 
-	logrus.WithFields(logrus.Fields{
-		"profile_id": p.Id,
-	}).Info("profile: Connecting")
+	log.Info("profile: Connecting", p.Id)
 
 	if runtime.GOOS == "darwin" && n == 0 {
 		utils.ClearScutilKeys()
@@ -628,9 +577,8 @@ func (p *Profile) Start(timeout bool) (err error) {
 		}
 	}
 
-	blockPath, e := p.writeBlock()
-	if e != nil {
-		err = e
+	blockPath, err := p.writeBlock()
+	if err != nil {
 		p.clearStatus(start)
 		return
 	}
@@ -641,17 +589,15 @@ func (p *Profile) Start(timeout bool) (err error) {
 		args = append(args, "--script-security", "1")
 		break
 	case "darwin":
-		upPath, e := p.writeUp()
-		if e != nil {
-			err = e
+		upPath, err := p.writeUp()
+		if err != nil {
 			p.clearStatus(start)
 			return
 		}
 		p.remPaths = append(p.remPaths, upPath)
 
-		downPath, e := p.writeDown()
-		if e != nil {
-			err = e
+		downPath, err := p.writeDown()
+		if err != nil {
 			p.clearStatus(start)
 			return
 		}
@@ -667,17 +613,15 @@ func (p *Profile) Start(timeout bool) (err error) {
 		)
 		break
 	case "linux":
-		upPath, e := p.writeUp()
-		if e != nil {
-			err = e
+		upPath, err := p.writeUp()
+		if err != nil {
 			p.clearStatus(start)
 			return
 		}
 		p.remPaths = append(p.remPaths, upPath)
 
-		downPath, e := p.writeDown()
-		if e != nil {
-			err = e
+		downPath, err := p.writeDown()
+		if err != nil {
 			p.clearStatus(start)
 			return
 		}
@@ -693,7 +637,7 @@ func (p *Profile) Start(timeout bool) (err error) {
 		)
 		break
 	default:
-		panic("profile: Not implemented")
+		log.Panic("profile: Not implemented")
 	}
 
 	if authPath != "" {
@@ -706,18 +650,14 @@ func (p *Profile) Start(timeout bool) (err error) {
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		err = &ExecError{
-			errors.Wrap(err, "profile: Failed to get stdout"),
-		}
+		err = errors.New("profile: Failed to get stdout " + err.Error())
 		p.clearStatus(start)
 		return
 	}
 
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
-		err = &ExecError{
-			errors.Wrap(err, "profile: Failed to get stderr"),
-		}
+		err = errors.New("profile: Failed to get stderr " + err.Error())
 		p.clearStatus(start)
 		return
 	}
@@ -728,13 +668,9 @@ func (p *Profile) Start(timeout bool) (err error) {
 
 	go func() {
 		defer func() {
-			panc := recover()
-			if panc != nil {
-				logrus.WithFields(logrus.Fields{
-					"stack": string(debug.Stack()),
-					"panic": panc,
-				}).Error("profile: Panic")
-				panic(panc)
+			err := recover()
+			if err != nil {
+				log.Panic("profile: Panic", err)
 			}
 		}()
 
@@ -751,14 +687,9 @@ func (p *Profile) Start(timeout bool) (err error) {
 					!strings.Contains(err.Error(), "file already closed") &&
 					!strings.Contains(err.Error(), "bad file descriptor") {
 
-					err = &errortypes.ReadError{
-						errors.Wrap(err, "profile: Failed to read stdout"),
-					}
-					logrus.WithFields(logrus.Fields{
-						"error": err,
-					}).Error("profile: Stdout error")
+					err = errors.New("profile: Failed to read stdout " + err.Error())
+					log.Error(err)
 				}
-
 				return
 			}
 
@@ -771,13 +702,10 @@ func (p *Profile) Start(timeout bool) (err error) {
 
 	go func() {
 		defer func() {
-			panc := recover()
-			if panc != nil {
-				logrus.WithFields(logrus.Fields{
-					"stack": string(debug.Stack()),
-					"panic": panc,
-				}).Error("profile: Panic")
-				panic(panc)
+			err := recover()
+			if err != nil {
+
+				log.Panic("profile: Panic", err)
 			}
 		}()
 
@@ -791,14 +719,8 @@ func (p *Profile) Start(timeout bool) (err error) {
 					!strings.Contains(err.Error(), "file already closed") &&
 					!strings.Contains(err.Error(), "bad file descriptor") {
 
-					err = &errortypes.ReadError{
-						errors.Wrap(err, "profile: Failed to read stderr"),
-					}
-					logrus.WithFields(logrus.Fields{
-						"error": err,
-					}).Error("profile: Stderr error")
+					log.Error(errors.New("profile: Failed to read stderr " + err.Error()))
 				}
-
 				return
 			}
 
@@ -811,13 +733,9 @@ func (p *Profile) Start(timeout bool) (err error) {
 
 	go func() {
 		defer func() {
-			panc := recover()
-			if panc != nil {
-				logrus.WithFields(logrus.Fields{
-					"stack": string(debug.Stack()),
-					"panic": panc,
-				}).Error("profile: Panic")
-				panic(panc)
+			err := recover()
+			if err != nil {
+				log.Panic("profile: Panic", err)
 			}
 		}()
 
@@ -835,9 +753,7 @@ func (p *Profile) Start(timeout bool) (err error) {
 
 	err = cmd.Start()
 	if err != nil {
-		err = &ExecError{
-			errors.Wrap(err, "profile: Failed to start openvpn"),
-		}
+		err = errors.New("profile: Failed to start openvpn " + err.Error())
 		p.clearStatus(start)
 		return
 	}
@@ -845,13 +761,9 @@ func (p *Profile) Start(timeout bool) (err error) {
 	running := true
 	go func() {
 		defer func() {
-			panc := recover()
-			if panc != nil {
-				logrus.WithFields(logrus.Fields{
-					"stack": string(debug.Stack()),
-					"panic": panc,
-				}).Error("profile: Panic")
-				panic(panc)
+			err := recover()
+			if err != nil {
+				log.Panic("profile: Panic", err)
 			}
 		}()
 
@@ -862,31 +774,22 @@ func (p *Profile) Start(timeout bool) (err error) {
 		if runtime.GOOS == "darwin" {
 			err = utils.RestoreScutilDns()
 			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"error": err,
-				}).Error("profile: Failed to restore DNS")
+				log.Error("profile: Failed to restore DNS " + err.Error())
 			}
 		}
 
 		if !p.stop {
-			logrus.WithFields(logrus.Fields{
-				"profile_id": p.Id,
-			}).Error("profile: Unexpected profile exit")
+			log.Error("profile: Unexpected profile exit", p.Id)
 		}
-
 		p.clearStatus(start)
 	}()
 
 	if timeout {
 		go func() {
 			defer func() {
-				panc := recover()
-				if panc != nil {
-					logrus.WithFields(logrus.Fields{
-						"stack": string(debug.Stack()),
-						"panic": panc,
-					}).Error("profile: Panic")
-					panic(panc)
+				err := recover()
+				if err != nil {
+					log.Panic("profile: Panic", err)
 				}
 			}()
 
@@ -897,10 +800,7 @@ func (p *Profile) Start(timeout bool) (err error) {
 				} else {
 					err = p.cmd.Process.Signal(os.Interrupt)
 					if err != nil {
-						err = &ExecError{
-							errors.Wrap(err,
-								"profile: Failed to interrupt openvpn"),
-						}
+						err = errors.New("profile: Failed to interrupt openvpn " + err.Error())
 						return
 					}
 
@@ -908,13 +808,9 @@ func (p *Profile) Start(timeout bool) (err error) {
 
 					go func() {
 						defer func() {
-							panc := recover()
-							if panc != nil {
-								logrus.WithFields(logrus.Fields{
-									"stack": string(debug.Stack()),
-									"panic": panc,
-								}).Error("profile: Panic")
-								panic(panc)
+							err := recover()
+							if err != nil {
+								log.Panic("profile: Panic", err)
 							}
 						}()
 
@@ -929,7 +825,7 @@ func (p *Profile) Start(timeout bool) (err error) {
 					done = true
 				}
 
-				evt := event.Event{
+				evt := events.Event{
 					Type: "timeout_error",
 					Data: p,
 				}
@@ -946,9 +842,7 @@ func (p *Profile) Stop() (err error) {
 		return
 	}
 
-	logrus.WithFields(logrus.Fields{
-		"profile_id": p.Id,
-	}).Info("profile: Disconnecting")
+	log.Info("profile: Disconnecting", p.Id)
 
 	p.stop = true
 	p.Status = "disconnecting"
@@ -957,9 +851,7 @@ func (p *Profile) Stop() (err error) {
 	if runtime.GOOS == "windows" {
 		err = p.cmd.Process.Kill()
 		if err != nil {
-			err = &ExecError{
-				errors.Wrap(err, "profile: Failed to stop openvpn"),
-			}
+			err = errors.New("profile: Failed to stop openvpn " + err.Error())
 			return
 		}
 	} else {
@@ -968,13 +860,9 @@ func (p *Profile) Stop() (err error) {
 
 		go func() {
 			defer func() {
-				panc := recover()
-				if panc != nil {
-					logrus.WithFields(logrus.Fields{
-						"stack": string(debug.Stack()),
-						"panic": panc,
-					}).Error("profile: Panic")
-					panic(panc)
+				err := recover()
+				if err != nil {
+					log.Panic("profile: Panic", err)
 				}
 			}()
 
