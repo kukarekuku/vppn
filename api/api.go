@@ -2,7 +2,6 @@
 package api
 
 import (
-	"../auth"
 	"crypto/subtle"
 	"github.com/gin-gonic/gin"
 	"github.com/op/go-logging"
@@ -40,7 +39,7 @@ func Auth(c *gin.Context) {
 		c.Request.Header.Get("User-Agent") != "pritunl" ||
 		subtle.ConstantTimeCompare(
 			[]byte(c.Request.Header.Get("Auth-Key")),
-			[]byte(auth.Key)) != 1 {
+			[]byte(Key)) != 1 {
 
 		c.AbortWithStatus(401)
 		return

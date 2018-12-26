@@ -208,15 +208,15 @@ func (p *Profile) writeAuth() (pth string, err error) {
 	if p.ServerPublicKey != "" {
 		block, _ := pem.Decode([]byte(p.ServerPublicKey))
 
-		pub, err := x509.ParsePKCS1PublicKey(block.Bytes)
-		if err != nil {
-			err = errors.New("profile: Failed to parse public key " + err.Error())
-			return
+		pub, e := x509.ParsePKCS1PublicKey(block.Bytes)
+		if e != nil {
+			e = errors.New("profile: Failed to parse public key " + e.Error())
+			return pth, e
 		}
 
-		nonce, err := utils.RandStr(32)
-		if err != nil {
-			return
+		nonce, e := utils.RandStr(32)
+		if e != nil {
+			return pth, e
 		}
 
 		tokn := token.Get(p.Id, p.ServerPublicKey)
@@ -224,9 +224,9 @@ func (p *Profile) writeAuth() (pth string, err error) {
 
 		authToken := ""
 		if tokn != nil {
-			err = tokn.Update()
-			if err != nil {
-				return
+			e = tokn.Update()
+			if e != nil {
+				return pth, e
 			}
 
 			authToken = tokn.Token
@@ -239,22 +239,22 @@ func (p *Profile) writeAuth() (pth string, err error) {
 			Timestamp: time.Now().Unix(),
 		}
 
-		authDataJson, err := json.Marshal(authData)
-		if err != nil {
-			err = errors.New("profile: Failed to encode auth data " + err.Error())
-			return
+		authDataJson, e := json.Marshal(authData)
+		if e != nil {
+			e = errors.New("profile: Failed to encode auth data " + e.Error())
+			return pth, e
 		}
 
-		ciphertext, err := rsa.EncryptOAEP(
+		ciphertext, e := rsa.EncryptOAEP(
 			sha512.New(),
 			rand.Reader,
 			pub,
 			authDataJson,
 			[]byte{},
 		)
-		if err != nil {
-			err = errors.New("profile: Failed to encrypt auth data " + err.Error())
-			return
+		if e != nil {
+			e = errors.New("profile: Failed to encrypt auth data " + e.Error())
+			return pth, e
 		}
 
 		ciphertext64 := base64.StdEncoding.EncodeToString(ciphertext)
@@ -589,17 +589,17 @@ func (p *Profile) Start(timeout bool) (err error) {
 		args = append(args, "--script-security", "1")
 		break
 	case "darwin":
-		upPath, err := p.writeUp()
-		if err != nil {
+		upPath, e := p.writeUp()
+		if e != nil {
 			p.clearStatus(start)
-			return
+			return e
 		}
 		p.remPaths = append(p.remPaths, upPath)
 
-		downPath, err := p.writeDown()
-		if err != nil {
+		downPath, e := p.writeDown()
+		if e != nil {
 			p.clearStatus(start)
-			return
+			return e
 		}
 		p.remPaths = append(p.remPaths, downPath)
 
@@ -613,17 +613,17 @@ func (p *Profile) Start(timeout bool) (err error) {
 		)
 		break
 	case "linux":
-		upPath, err := p.writeUp()
-		if err != nil {
+		upPath, e := p.writeUp()
+		if e != nil {
 			p.clearStatus(start)
-			return
+			return e
 		}
 		p.remPaths = append(p.remPaths, upPath)
 
-		downPath, err := p.writeDown()
-		if err != nil {
+		downPath, e := p.writeDown()
+		if e != nil {
 			p.clearStatus(start)
-			return
+			return e
 		}
 		p.remPaths = append(p.remPaths, downPath)
 

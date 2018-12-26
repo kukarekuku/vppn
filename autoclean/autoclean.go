@@ -1,21 +1,35 @@
 // For OS X to detect removal of Pritunl.app and auto uninstall all files.
-package command
+package autoclean
 
 import (
-	"../utils"
+	cmd "../shared/command"
+	"../shared/utils"
+	"github.com/op/go-logging"
 	"os"
 	"path/filepath"
 	"runtime"
 	"time"
 )
 
+var (
+	log = logging.MustGetLogger("autoclean")
+)
+
 const (
 	pathSep = string(os.PathSeparator)
 )
 
+func Init() {
+	err := CheckAndClean()
+	if err != nil {
+		log.Error("main: Failed to run check and clean", err)
+		return
+	}
+}
+
 func clean() (err error) {
-	Command("kextunload", "-b", "net.sf.tuntaposx.tap").Run()
-	Command("kextunload", "-b", "net.sf.tuntaposx.tun").Run()
+	cmd.Command("kextunload", "-b", "net.sf.tuntaposx.tap").Run()
+	cmd.Command("kextunload", "-b", "net.sf.tuntaposx.tun").Run()
 
 	paths := []string{
 		filepath.Join(pathSep, "private", "var", "db", "receipts",
@@ -43,7 +57,6 @@ func CheckAndClean() (err error) {
 	root := utils.GetRootDir()
 	if runtime.GOOS != "darwin" ||
 		root != "/Applications/Pritunl.app/Contents/Resources" {
-
 		return
 	}
 
@@ -58,7 +71,6 @@ func CheckAndClean() (err error) {
 	}
 
 	os.Exit(0)
-
 	return
 }
 
@@ -67,7 +79,6 @@ func CheckAndCleanWatch() {
 	root := utils.GetRootDir()
 	if runtime.GOOS != "darwin" ||
 		root != "/Applications/Pritunl.app/Contents/Resources" {
-
 		return
 	}
 

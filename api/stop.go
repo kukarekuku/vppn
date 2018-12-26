@@ -1,8 +1,8 @@
 package api
 
 import (
+	"../autoclean"
 	"../profile"
-	"../shared/command"
 	"github.com/gin-gonic/gin"
 )
 
@@ -12,7 +12,7 @@ func stopPost(c *gin.Context) {
 		prfl.Stop()
 	}
 
-	command.CheckAndCleanWatch()
+	autoclean.CheckAndCleanWatch()
 
 	c.JSON(200, nil)
 }
