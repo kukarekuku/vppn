@@ -4,6 +4,7 @@ import (
 	"../profile"
 	"../watch"
 	"context"
+	"github.com/AlexeySpiridonov/goapp-config"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"os"
@@ -16,7 +17,7 @@ var (
 	Key = ""
 )
 
-func Init(authKey string) {
+func runServer(authKey string) {
 	Key = authKey
 
 	gin.SetMode(gin.ReleaseMode)
@@ -27,14 +28,14 @@ func Init(authKey string) {
 	watch.StartWatch()
 
 	server := &http.Server{
-		Addr:           "127.0.0.1:9780",
+		Addr:           config.Local.Get("serverHostApi"),
 		Handler:        router,
 		ReadTimeout:    30 * time.Second,
 		WriteTimeout:   30 * time.Second,
 		MaxHeaderBytes: 4096,
 	}
 
-	run(server)
+	go run(server)
 
 	sig := make(chan os.Signal, 2)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)

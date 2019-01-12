@@ -4,9 +4,7 @@ import (
 	"./api"
 	"./auth"
 	"./autoclean"
-	"./config"
 	"./shared/utils"
-	"flag"
 	"github.com/op/go-logging"
 )
 
@@ -15,13 +13,8 @@ var (
 )
 
 func main() {
-	// получаем параметры
-	devPtr := flag.Bool("dev", false, "development mode")
-	// если передали dev, то инитим приложение в dev mode
-	flag.Parse()
-	if *devPtr {
-		config.Development = true
-	}
+	// при старте первым аргументом передаем тип окружения "dev", "prod" etc
+	// config.Local.Name = "dev"
 
 	// инитим процесс
 	err := utils.PidInit()

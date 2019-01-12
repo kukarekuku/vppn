@@ -1,8 +1,8 @@
 package profile
 
 import (
-	"../config"
 	"../shared/utils"
+	"github.com/AlexeySpiridonov/goapp-config"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -17,7 +17,7 @@ var (
 )
 
 func getOpenvpnPath() (pth string) {
-	if config.Development {
+	if config.Local.Name == "dev" {
 		switch runtime.GOOS {
 		case "windows":
 			pth = filepath.Join(utils.GetRootDir(), "..",
@@ -50,7 +50,7 @@ func getOpenvpnPath() (pth string) {
 }
 
 func getOpenvpnDir() (pth string) {
-	if config.Development {
+	if config.Local.Name == "dev" {
 		switch runtime.GOOS {
 		case "windows":
 			pth = filepath.Join(utils.GetRootDir(), "..", "openvpn_win")

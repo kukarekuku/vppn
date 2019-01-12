@@ -2,13 +2,13 @@
 package utils
 
 import (
-	"../../config"
 	"../command"
 	"bufio"
 	"bytes"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"github.com/AlexeySpiridonov/goapp-config"
 	"github.com/Sirupsen/logrus"
 	"github.com/dropbox/godropbox/container/set"
 	"github.com/dropbox/godropbox/errors"
@@ -592,7 +592,7 @@ func GetRootDir() (pth string) {
 }
 
 func GetAuthPath() (pth string) {
-	if config.Development {
+	if config.Local.Name == "dev" {
 		pth = filepath.Join(GetRootDir(), "..", "dev")
 
 		err := os.MkdirAll(pth, 0755)
@@ -634,7 +634,7 @@ func GetAuthPath() (pth string) {
 }
 
 func GetLogPath() (pth string) {
-	if config.Development {
+	if config.Local.Name == "dev" {
 		pth = filepath.Join(GetRootDir(), "..", "dev", "log")
 
 		err := os.MkdirAll(pth, 0755)
@@ -676,7 +676,7 @@ func GetLogPath() (pth string) {
 }
 
 func GetLogPath2() (pth string) {
-	if config.Development {
+	if config.Local.Name == "dev" {
 		pth = filepath.Join(GetRootDir(), "..", "dev", "log")
 
 		err := os.MkdirAll(pth, 0755)
@@ -718,7 +718,7 @@ func GetLogPath2() (pth string) {
 }
 
 func GetTempDir() (pth string, err error) {
-	if config.Development {
+	if config.Local.Name == "dev" {
 		pth = filepath.Join(GetRootDir(), "..", "dev", "tmp")
 		err = os.MkdirAll(pth, 0755)
 		return
@@ -740,7 +740,7 @@ func GetTempDir() (pth string, err error) {
 }
 
 func GetPidPath() (pth string) {
-	if config.Development {
+	if config.Local.Name == "dev" {
 		pth = filepath.Join(GetRootDir(), "..", "dev")
 
 		err := os.MkdirAll(pth, 0755)

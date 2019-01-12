@@ -12,6 +12,10 @@ var (
 	log = logging.MustGetLogger("api")
 )
 
+func Init(authKey string) {
+	runServer(authKey)
+}
+
 // Recover panics
 func Recovery(c *gin.Context) {
 	defer func() {
