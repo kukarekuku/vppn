@@ -50,15 +50,6 @@ type OutputData struct {
 }
 
 type Profile struct {
-	state           bool             `json:"-"`
-	stateLock       sync.Mutex       `json:"-"`
-	stop            bool             `json:"-"`
-	waiters         []chan bool      `json:"-"`
-	remPaths        []string         `json:"-"`
-	cmd             *exec.Cmd        `json:"-"`
-	intf            *utils.Interface `json:"-"`
-	lastAuthErr     time.Time        `json:"-"`
-	token           *token.Token     `json:"-"`
 	Id              string           `json:"id"`
 	Data            string           `json:"-"`
 	Username        string           `json:"-"`
@@ -69,6 +60,15 @@ type Profile struct {
 	Timestamp       int64            `json:"timestamp"`
 	ServerAddr      string           `json:"server_addr"`
 	ClientAddr      string           `json:"client_addr"`
+	state           bool             `json:"-"`
+	stateLock       sync.Mutex       `json:"-"`
+	stop            bool             `json:"-"`
+	waiters         []chan bool      `json:"-"`
+	remPaths        []string         `json:"-"`
+	cmd             *exec.Cmd        `json:"-"`
+	intf            *utils.Interface `json:"-"`
+	lastAuthErr     time.Time        `json:"-"`
+	token           *token.Token     `json:"-"`
 }
 
 type AuthData struct {

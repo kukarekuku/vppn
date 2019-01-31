@@ -593,7 +593,9 @@ func GetRootDir() (pth string) {
 
 func GetAuthPath() (pth string) {
 	if config.Local.Name == "dev" {
-		pth = filepath.Join(GetRootDir(), "..", "dev")
+		// todo remove dev path
+		// pth = filepath.Join(GetRootDir(), "..", "dev")
+		pth = config.Local.Get("devAuthDir")
 
 		err := os.MkdirAll(pth, 0755)
 		if err != nil {
@@ -603,6 +605,7 @@ func GetAuthPath() (pth string) {
 
 		pth = filepath.Join(pth, "auth")
 
+		log.Debug(pth)
 		return
 	}
 

@@ -56,15 +56,27 @@ func Register(engine *gin.Engine) {
 	engine.Use(Recovery)
 	engine.Use(Errors)
 
+	// ???
 	engine.GET("/events", eventsGet)
+	// получить текущий профиль
 	engine.GET("/profile", profileGet)
+	// добавление профиля
 	engine.POST("/profile", profilePost)
+	// todo убрать метод удаления профилей
 	engine.DELETE("/profile", profileDel)
+
+	// todo с токеном выпилить логику. мы используем один профиль
 	engine.PUT("/token", tokenPut)
 	engine.DELETE("/token", tokenDelete)
+
+	// пингуем хелпер
 	engine.GET("/ping", pingGet)
+	// остановить текущее соединение
 	engine.POST("/stop", stopPost)
+	// переподключение по профилю
 	engine.POST("/restart", restartPost)
+	// текущий статус соединия
 	engine.GET("/status", statusGet)
+	// поднимаем соединение
 	engine.POST("/wakeup", wakeupPost)
 }
